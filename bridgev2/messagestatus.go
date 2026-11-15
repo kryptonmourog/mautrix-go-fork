@@ -232,6 +232,10 @@ func (ms *MessageStatus) ToNoticeEvent(evt *MessageStatusEventInfo) *event.Messa
 		messagePrefix = t("Your redaction was not bridged")
 	case evt.EventType == event.EventRedaction:
 		messagePrefix = t("Your redaction may not have been bridged")
+	case evt.EventType == event.EventUnstablePollResponse && ms.IsCertain:
+		messagePrefix = t("Your vote was not bridged")
+	case evt.EventType == event.EventUnstablePollResponse:
+		messagePrefix = t("Your vote may not have been bridged")
 	case ms.IsCertain:
 		messagePrefix = t("Your message was not bridged")
 	default:
