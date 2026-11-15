@@ -46,11 +46,20 @@ type Event struct {
 
 // Reply sends a reply to command as notice, with optional string formatting and automatic $cmdprefix replacement.
 func (ce *Event) Reply(msg string, args ...any) id.EventID {
+	msg = ce.T(msg)
 	msg = strings.ReplaceAll(msg, "$cmdprefix", ce.Bridge.Config.CommandPrefix)
 	if len(args) > 0 {
 		msg = fmt.Sprintf(msg, args...)
 	}
 	return ce.ReplyAdvanced(msg, true, false)
+}
+
+// T translates a user-facing text for the user who sent the command, see bridgev2.Translate.
+func (ce *Event) T(msg string) string {
+	if ce.User == nil {
+		return msg
+	}
+	return bridgev2.Translate(ce.Ctx, ce.User.MXID, msg)
 }
 
 // ReplyAdvanced sends a reply to command as notice. It allows using HTML and disabling markdown,

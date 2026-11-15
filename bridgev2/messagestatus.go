@@ -7,6 +7,7 @@
 package bridgev2
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -220,24 +221,29 @@ func (ms *MessageStatus) ToMSSEvent(evt *MessageStatusEventInfo) *event.BeeperMe
 }
 
 func (ms *MessageStatus) ToNoticeEvent(evt *MessageStatusEventInfo) *event.MessageEventContent {
-	certainty := "may not have been"
-	if ms.IsCertain {
-		certainty = "was not"
-	}
-	evtType := "message"
-	switch evt.EventType {
-	case event.EventReaction:
-		evtType = "reaction"
-	case event.EventRedaction:
-		evtType = "redaction"
+	t := func(s string) string { return Translate(context.Background(), evt.Sender, s) }
+	var messagePrefix string
+	switch {
+	case evt.EventType == event.EventReaction && ms.IsCertain:
+		messagePrefix = t("Your reaction was not bridged")
+	case evt.EventType == event.EventReaction:
+		messagePrefix = t("Your reaction may not have been bridged")
+	case evt.EventType == event.EventRedaction && ms.IsCertain:
+		messagePrefix = t("Your redaction was not bridged")
+	case evt.EventType == event.EventRedaction:
+		messagePrefix = t("Your redaction may not have been bridged")
+	case ms.IsCertain:
+		messagePrefix = t("Your message was not bridged")
+	default:
+		messagePrefix = t("Your message may not have been bridged")
 	}
 	msg := ms.Message
 	if ms.ErrorAsMessage || msg == "" {
 		msg = ms.InternalError.Error()
 	}
-	messagePrefix := fmt.Sprintf("Your %s %s bridged", evtType, certainty)
+	msg = t(msg)
 	if ms.Step == status.MsgStepCommand {
-		messagePrefix = "Handling your command panicked"
+		messagePrefix = t("Handling your command panicked")
 	}
 	content := &event.MessageEventContent{
 		MsgType:   event.MsgNotice,

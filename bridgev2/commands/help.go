@@ -110,18 +110,22 @@ func FormatHelp(ce *Event) string {
 	} else {
 		prefixMsg = "This is not your management room: prefixing commands with `%s` is required."
 	}
-	_, _ = fmt.Fprintf(&output, prefixMsg, ce.Bridge.Config.CommandPrefix)
+	_, _ = fmt.Fprintf(&output, ce.T(prefixMsg), ce.Bridge.Config.CommandPrefix)
 	output.WriteByte('\n')
-	output.WriteString("Parameters in [square brackets] are optional, while parameters in <angle brackets> are required.")
+	output.WriteString(ce.T("Parameters in [square brackets] are optional, while parameters in <angle brackets> are required."))
 	output.WriteByte('\n')
 	output.WriteByte('\n')
 
 	for _, section := range sortedSections {
 		output.WriteString("#### ")
-		output.WriteString(section.Name)
+		output.WriteString(ce.T(section.Name))
 		output.WriteByte('\n')
 		sort.Sort(sections[section])
 		for _, command := range sections[section] {
+			command.Description = ce.T(command.Description)
+			if command.Args != "" {
+				command.Args = ce.T(command.Args)
+			}
 			output.WriteString(command.String())
 			output.WriteByte('\n')
 		}

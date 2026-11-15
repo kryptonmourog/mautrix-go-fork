@@ -204,15 +204,16 @@ func (bsq *BridgeStateQueue) sendNotice(ctx context.Context, state status.Bridge
 	if name == "" {
 		name = fmt.Sprintf("`%s`", bsq.login.ID)
 	}
-	message := fmt.Sprintf("State update for %s: `%s`", name, state.StateEvent)
+	t := func(s string) string { return Translate(ctx, bsq.login.User.MXID, s) }
+	message := fmt.Sprintf(t("State update for %s: `%s`"), name, t(string(state.StateEvent)))
 	if state.Error != "" {
 		message += fmt.Sprintf(" (`%s`)", state.Error)
 	}
 	if isDelayed {
-		message += fmt.Sprintf(" not resolved after waiting %s", exfmt.Duration(TransientDisconnectNoticeDelay))
+		message += fmt.Sprintf(t(" not resolved after waiting %s"), exfmt.Duration(TransientDisconnectNoticeDelay))
 	}
 	if state.Message != "" {
-		message += fmt.Sprintf(": %s", state.Message)
+		message += fmt.Sprintf(": %s", t(state.Message))
 	}
 	content := format.RenderMarkdown(message, true, false)
 	if !isError {

@@ -59,6 +59,7 @@ func (br *Bridge) handleBotInvite(ctx context.Context, evt *event.Event, sender 
 }
 
 func sendNotice(ctx context.Context, evt *event.Event, intent MatrixAPI, message string, args ...any) {
+	message = Translate(ctx, evt.Sender, message)
 	if len(args) > 0 {
 		message = fmt.Sprintf(message, args...)
 	}
