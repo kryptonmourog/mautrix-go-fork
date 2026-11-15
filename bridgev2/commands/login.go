@@ -48,10 +48,10 @@ var CommandRelogin = &FullHandler{
 	RequiresLoginPermission: true,
 }
 
-func formatFlowsReply(flows []bridgev2.LoginFlow) string {
+func formatFlowsReply(ce *Event, flows []bridgev2.LoginFlow) string {
 	var buf strings.Builder
 	for _, flow := range flows {
-		_, _ = fmt.Fprintf(&buf, "* `%s` - %s\n", flow.ID, flow.Description)
+		_, _ = fmt.Fprintf(&buf, "* `%s` - %s\n", flow.ID, ce.T(flow.Description))
 	}
 	return buf.String()
 }
@@ -99,16 +99,16 @@ func fnLogin(ce *Event) {
 			}
 		}
 		if chosenFlowID == "" {
-			ce.Reply("Invalid login flow `%s`. Available options:\n\n%s", inputFlowID, formatFlowsReply(flows))
+			ce.Reply("Invalid login flow `%s`. Available options:\n\n%s", inputFlowID, formatFlowsReply(ce, flows))
 			return
 		}
 	} else if len(flows) == 1 {
 		chosenFlowID = flows[0].ID
 	} else {
 		if reauth != nil {
-			ce.Reply("Please specify a login flow, e.g. `relogin %s %s`.\n\n%s", reauth.ID, flows[0].ID, formatFlowsReply(flows))
+			ce.Reply("Please specify a login flow, e.g. `relogin %s %s`.\n\n%s", reauth.ID, flows[0].ID, formatFlowsReply(ce, flows))
 		} else {
-			ce.Reply("Please specify a login flow, e.g. `login %s`.\n\n%s", flows[0].ID, formatFlowsReply(flows))
+			ce.Reply("Please specify a login flow, e.g. `login %s`.\n\n%s", flows[0].ID, formatFlowsReply(ce, flows))
 		}
 		return
 	}
@@ -221,15 +221,15 @@ type userInputLoginCommandState struct {
 
 func (uilcs *userInputLoginCommandState) promptNext(ce *Event) {
 	field := uilcs.RemainingFields[0]
-	parts := []string{fmt.Sprintf("Please enter your %s", field.Name)}
+	parts := []string{fmt.Sprintf(ce.T("Please enter your %s"), ce.T(field.Name))}
 	if field.Description != "" {
-		parts = append(parts, field.Description)
+		parts = append(parts, ce.T(field.Description))
 	}
 	if len(field.Options) > 0 {
-		parts = append(parts, fmt.Sprintf("Options: `%s`", strings.Join(field.Options, "`, `")))
+		parts = append(parts, fmt.Sprintf(ce.T("Options: `%s`"), strings.Join(field.Options, "`, `")))
 	}
 	if field.Optional {
-		parts = append(parts, "Enter `skip` to skip this field")
+		parts = append(parts, ce.T("Enter `skip` to skip this field"))
 	}
 	ce.Reply(strings.Join(parts, "\n"))
 	StoreCommandState(ce.User, &CommandState{
