@@ -2594,7 +2594,7 @@ func (portal *Portal) UpdateMatrixRoomID(
 	if params.TombstoneOldRoom && oldRoom != "" {
 		_, err = portal.Bridge.Bot.SendState(ctx, oldRoom, event.StateTombstone, "", &event.Content{
 			Parsed: &event.TombstoneEventContent{
-				Body:            "Room has been replaced.",
+				Body:            Translate(ctx, "", "Room has been replaced."),
 				ReplacementRoom: newRoomID,
 			},
 		}, time.Now())
@@ -3316,7 +3316,7 @@ func (portal *Portal) sendRemoteErrorNotice(ctx context.Context, intent MatrixAP
 	resp, sendErr := intent.SendMessage(ctx, portal.MXID, event.EventMessage, &event.Content{
 		Parsed: &event.MessageEventContent{
 			MsgType:  event.MsgNotice,
-			Body:     fmt.Sprintf("An error occurred while processing an incoming %s", evtTypeName),
+			Body:     fmt.Sprintf(Translate(ctx, "", "An error occurred while processing an incoming %s"), evtTypeName),
 			Mentions: &event.Mentions{},
 		},
 		Raw: map[string]any{
@@ -5185,7 +5185,7 @@ func DisappearingMessageNotice(expiration time.Duration, implicit bool) *event.M
 	formattedDuration := exfmt.DurationCustom(expiration, nil, exfmt.Day, time.Hour, time.Minute, time.Second)
 	content := &event.MessageEventContent{
 		MsgType:  event.MsgNotice,
-		Body:     fmt.Sprintf("Set the disappearing message timer to %s", formattedDuration),
+		Body:     fmt.Sprintf(Translate(context.Background(), "", "Set the disappearing message timer to %s"), formattedDuration),
 		Mentions: &event.Mentions{},
 	}
 	if expiration == 0 {

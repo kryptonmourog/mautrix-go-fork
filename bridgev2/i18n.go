@@ -15,7 +15,8 @@ import (
 // Translate translates user-facing text of the bridge (command replies, help, notices) for the given
 // user. msg is the English text as written in the code, before any formatting arguments are applied,
 // so it can be used as the key of a translation catalog. It returns msg unchanged by default; network
-// connectors can replace it to localize the bridge.
+// connectors can replace it to localize the bridge. An empty userID means texts sent into rooms rather
+// than to a specific user, which connectors can put in their default language.
 var Translate = func(ctx context.Context, userID id.UserID, msg string) string {
 	return msg
 }

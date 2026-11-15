@@ -157,7 +157,7 @@ func (br *Bridge) ReIDPortal(ctx context.Context, source, target networkid.Porta
 		go func() {
 			_, err := br.Bot.SendState(ctx, sourcePortal.MXID, event.StateTombstone, "", &event.Content{
 				Parsed: &event.TombstoneEventContent{
-					Body:            "This room has been merged",
+					Body:            Translate(ctx, "", "This room has been merged"),
 					ReplacementRoom: targetPortal.MXID,
 				},
 			}, time.Now())
