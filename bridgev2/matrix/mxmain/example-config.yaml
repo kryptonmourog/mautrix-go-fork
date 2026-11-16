@@ -440,6 +440,8 @@ encryption:
     allow: false
     # Whether to force-enable encryption in all bridged rooms.
     default: false
+    # Whether to force-enable encryption in new private chat portals.
+    personal: false
     # Whether to require all messages to be encrypted and drop any unencrypted messages.
     require: false
     # Whether to use MSC3202/MSC4203 instead of /sync long polling for receiving encryption-related data.

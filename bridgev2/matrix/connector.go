@@ -726,6 +726,17 @@ func (br *Connector) isEncrypted(ctx context.Context, roomID id.RoomID) (bool, e
 	return br.StateStore.IsEncrypted(ctx, roomID)
 }
 
+func (br *Connector) IsRoomEncrypted(ctx context.Context, roomID id.RoomID) (bool, error) {
+	return br.isEncrypted(ctx, roomID)
+}
+
+func (br *Connector) EnableRoomEncryption(ctx context.Context, roomID id.RoomID) error {
+	_, err := br.Bot.SendStateEvent(ctx, roomID, event.StateEncryption, "", &event.Content{
+		Parsed: br.getDefaultEncryptionEvent(),
+	})
+	return err
+}
+
 func (br *Connector) BatchSend(ctx context.Context, roomID id.RoomID, req *mautrix.ReqBeeperBatchSend, extras []*bridgev2.MatrixSendExtra) (*mautrix.RespBeeperBatchSend, error) {
 	if encrypted, err := br.isEncrypted(ctx, roomID); err != nil {
 		return nil, fmt.Errorf("failed to check if room is encrypted: %w", err)
@@ -788,12 +799,18 @@ func (br *Connector) HandleNewlyBridgedRoom(ctx context.Context, roomID id.RoomI
 	if err != nil {
 		zerolog.Ctx(ctx).Err(err).Msg("Failed to fetch members in newly bridged room")
 	}
-	if !br.Config.Encryption.Default {
+	shouldEncrypt := br.Config.Encryption.Default
+	if !shouldEncrypt && br.Config.Encryption.Personal {
+		portal, portalErr := br.Bridge.GetPortalByMXID(ctx, roomID)
+		if portalErr != nil {
+			return fmt.Errorf("failed to get newly bridged portal: %w", portalErr)
+		}
+		shouldEncrypt = portal != nil && portal.RoomType == database.RoomTypeDM
+	}
+	if !shouldEncrypt {
 		return nil
 	}
-	_, err = br.Bot.SendStateEvent(ctx, roomID, event.StateEncryption, "", &event.Content{
-		Parsed: br.getDefaultEncryptionEvent(),
-	})
+	err = br.EnableRoomEncryption(ctx, roomID)
 	if err != nil {
 		zerolog.Ctx(ctx).Err(err).Msg("Failed to enable encryption in newly bridged room")
 		return fmt.Errorf("failed to enable encryption")

@@ -155,6 +155,7 @@ type ReqCreateRoom struct {
 	BeeperLocalRoomID     id.RoomID   `json:"com.beeper.local_room_id,omitempty"`
 	BeeperBridgeName      string      `json:"com.beeper.bridge_name,omitempty"`
 	BeeperBridgeAccountID string      `json:"com.beeper.bridge_account_id,omitempty"`
+	BeeperPortal          bool        `json:"-"`
 }
 
 // ReqUpgradeRoom is the JSON request for https://spec.matrix.org/v1.16/client-server-api/#post_matrixclientv3roomsroomidupgrade

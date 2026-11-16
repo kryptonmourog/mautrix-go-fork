@@ -5569,6 +5569,7 @@ func (portal *Portal) createMatrixRoomInLoop(ctx context.Context, source *UserLo
 		IsDirect:           portal.RoomType == database.RoomTypeDM,
 		PowerLevelOverride: powerLevels,
 		BeeperLocalRoomID:  portal.Bridge.Matrix.GenerateDeterministicRoomID(portal.PortalKey),
+		BeeperPortal:       true,
 	}
 	autoJoinInvites := portal.Bridge.Matrix.GetCapabilities().AutoJoinInvites
 	if autoJoinInvites {

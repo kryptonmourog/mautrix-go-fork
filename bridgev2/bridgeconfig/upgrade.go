@@ -179,6 +179,7 @@ func doUpgrade(helper up.Helper) {
 
 	helper.Copy(up.Bool, "encryption", "allow")
 	helper.Copy(up.Bool, "encryption", "default")
+	helper.Copy(up.Bool, "encryption", "personal")
 	helper.Copy(up.Bool, "encryption", "require")
 	helper.Copy(up.Bool, "encryption", "appservice")
 	if val, ok := helper.Get(up.Bool, "appservice", "msc4190"); ok {

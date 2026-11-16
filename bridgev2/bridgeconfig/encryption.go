@@ -13,6 +13,7 @@ import (
 type EncryptionConfig struct {
 	Allow      bool `yaml:"allow"`
 	Default    bool `yaml:"default"`
+	Personal   bool `yaml:"personal"`
 	Require    bool `yaml:"require"`
 	Appservice bool `yaml:"appservice"`
 	MSC4190    bool `yaml:"msc4190"`

@@ -659,8 +659,13 @@ func (as *ASIntent) filterCreateRequestForV12(ctx context.Context, req *mautrix.
 	}
 }
 
+func (as *ASIntent) shouldEncryptCreatedRoom(req *mautrix.ReqCreateRoom) bool {
+	return as.Connector.Config.Encryption.Default ||
+		(as.Connector.Config.Encryption.Personal && req.BeeperPortal && req.IsDirect)
+}
+
 func (as *ASIntent) CreateRoom(ctx context.Context, req *mautrix.ReqCreateRoom) (id.RoomID, error) {
-	if as.Connector.Config.Encryption.Default {
+	if as.shouldEncryptCreatedRoom(req) {
 		req.InitialState = append(req.InitialState, &event.Event{
 			Type: event.StateEncryption,
 			Content: event.Content{
