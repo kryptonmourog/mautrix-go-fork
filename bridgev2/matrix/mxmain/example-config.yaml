@@ -370,6 +370,10 @@ direct_media:
     server_name: discord-media.example.com
     # Optionally a custom .well-known response. This defaults to `server_name:443`
     well_known_response:
+    # Optional implementation name and version returned by the federation version endpoint.
+    # The defaults identify mautrix-go and its version.
+    server_implementation_name:
+    server_implementation_version:
     # Optionally specify a custom prefix for the media ID part of the MXC URI.
     media_id_prefix:
     # If the remote network supports media downloads over HTTP, then the bridge will use MSC3860/MSC3916

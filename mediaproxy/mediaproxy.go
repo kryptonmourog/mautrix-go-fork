@@ -219,10 +219,12 @@ func New(serverName string, serverKey string, getMedia GetMediaFunc) (*MediaProx
 }
 
 type BasicConfig struct {
-	ServerName        string `yaml:"server_name" json:"server_name"`
-	ServerKey         string `yaml:"server_key" json:"server_key"`
-	FederationAuth    bool   `yaml:"federation_auth" json:"federation_auth"`
-	WellKnownResponse string `yaml:"well_known_response" json:"well_known_response"`
+	ServerName                  string `yaml:"server_name" json:"server_name"`
+	ServerKey                   string `yaml:"server_key" json:"server_key"`
+	FederationAuth              bool   `yaml:"federation_auth" json:"federation_auth"`
+	WellKnownResponse           string `yaml:"well_known_response" json:"well_known_response"`
+	ServerImplementationName    string `yaml:"server_implementation_name" json:"server_implementation_name"`
+	ServerImplementationVersion string `yaml:"server_implementation_version" json:"server_implementation_version"`
 }
 
 func NewFromConfig(cfg BasicConfig, getMedia GetMediaFunc) (*MediaProxy, error) {
@@ -232,6 +234,12 @@ func NewFromConfig(cfg BasicConfig, getMedia GetMediaFunc) (*MediaProxy, error) 
 	}
 	if cfg.WellKnownResponse != "" {
 		mp.KeyServer.WellKnownTarget = cfg.WellKnownResponse
+	}
+	if cfg.ServerImplementationName != "" {
+		mp.KeyServer.Version.Name = cfg.ServerImplementationName
+	}
+	if cfg.ServerImplementationVersion != "" {
+		mp.KeyServer.Version.Version = cfg.ServerImplementationVersion
 	}
 	if cfg.FederationAuth {
 		mp.EnableServerAuth(nil, nil)

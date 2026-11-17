@@ -142,6 +142,8 @@ func doUpgrade(helper up.Helper) {
 	helper.Copy(up.Str|up.Null, "direct_media", "media_id_prefix")
 	helper.Copy(up.Str, "direct_media", "server_name")
 	helper.Copy(up.Str|up.Null, "direct_media", "well_known_response")
+	helper.Copy(up.Str|up.Null, "direct_media", "server_implementation_name")
+	helper.Copy(up.Str|up.Null, "direct_media", "server_implementation_version")
 	helper.Copy(up.Bool, "direct_media", "allow_proxy")
 	if serverKey, ok := helper.Get(up.Str, "direct_media", "server_key"); !ok || serverKey == "generate" {
 		serverKey = federation.GenerateSigningKey().SynapseString()
