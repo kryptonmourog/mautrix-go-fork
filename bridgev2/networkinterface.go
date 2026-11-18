@@ -647,6 +647,15 @@ type BackfillingNetworkAPIWithLimits interface {
 	GetBackfillMaxBatchCount(ctx context.Context, portal *Portal, task *database.BackfillTask) int
 }
 
+// BackfillingNetworkAPIWithInitialLimit is an optional interface that network connectors can implement to
+// customize the number of messages fetched when a portal room is created, e.g. per room type.
+type BackfillingNetworkAPIWithInitialLimit interface {
+	BackfillingNetworkAPI
+	// GetInitialBackfillLimit returns the maximum number of messages to backfill into a new portal room.
+	// Return values less than 0 mean the max_initial_messages config option is used.
+	GetInitialBackfillLimit(ctx context.Context, portal *Portal) int
+}
+
 // EditHandlingNetworkAPI is an optional interface that network connectors can implement to handle message edits.
 type EditHandlingNetworkAPI interface {
 	NetworkAPI

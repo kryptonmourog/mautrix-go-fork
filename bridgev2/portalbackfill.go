@@ -45,6 +45,11 @@ func (portal *Portal) doForwardBackfill(ctx context.Context, source *UserLogin, 
 		limit = portal.Bridge.Config.Backfill.MaxCatchupMessages
 	} else {
 		limit = portal.Bridge.Config.Backfill.MaxInitialMessages
+		if limitAPI, ok := api.(BackfillingNetworkAPIWithInitialLimit); ok {
+			if custom := limitAPI.GetInitialBackfillLimit(ctx, portal); custom >= 0 {
+				limit = custom
+			}
+		}
 	}
 	if limit <= 0 {
 		return
