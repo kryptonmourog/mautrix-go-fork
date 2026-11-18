@@ -734,7 +734,20 @@ func (br *Connector) IsRoomEncrypted(ctx context.Context, roomID id.RoomID) (boo
 	return br.isEncrypted(ctx, roomID)
 }
 
+// ErrEncryptionUnavailable is returned when a room would be encrypted but the bridge can't decrypt
+// messages: encryption isn't allowed in the config or the bridge was built without it.
+var ErrEncryptionUnavailable = errors.New("encryption isn't enabled in the bridge")
+
+// CanEncryptRooms reports whether the bridge can take part in encrypted rooms.
+func (br *Connector) CanEncryptRooms() bool {
+	return br.Crypto != nil
+}
+
 func (br *Connector) EnableRoomEncryption(ctx context.Context, roomID id.RoomID) error {
+	if !br.CanEncryptRooms() {
+		// An encrypted room can't be made unencrypted again; the bridge would lose the room.
+		return ErrEncryptionUnavailable
+	}
 	_, err := br.Bot.SendStateEvent(ctx, roomID, event.StateEncryption, "", &event.Content{
 		Parsed: br.getDefaultEncryptionEvent(),
 	})
@@ -804,7 +817,7 @@ func (br *Connector) HandleNewlyBridgedRoom(ctx context.Context, roomID id.RoomI
 		zerolog.Ctx(ctx).Err(err).Msg("Failed to fetch members in newly bridged room")
 	}
 	shouldEncrypt := br.Config.Encryption.Default
-	if !shouldEncrypt && br.Config.Encryption.Personal {
+	if !shouldEncrypt && br.Config.Encryption.Personal && br.CanEncryptRooms() {
 		portal, portalErr := br.Bridge.GetPortalByMXID(ctx, roomID)
 		if portalErr != nil {
 			return fmt.Errorf("failed to get newly bridged portal: %w", portalErr)
