@@ -80,6 +80,8 @@ type Connector struct {
 	BridgeStateVersion         any
 
 	MediaConfig             mautrix.RespMediaConfig
+	// mediaConfigFetched is closed once fetching MediaConfig from the homeserver has finished.
+	mediaConfigFetched chan struct{}
 	SpecVersions            *mautrix.RespVersions
 	SpecCaps                *mautrix.RespCapabilities
 	specCapsLock            sync.Mutex
@@ -119,6 +121,7 @@ func NewConnector(cfg *bridgeconfig.Config) *Connector {
 	c.Config = cfg
 	c.userIDRegex = cfg.MakeUserIDRegex("(.+)")
 	c.MediaConfig.UploadSize = 50 * 1024 * 1024
+	c.mediaConfigFetched = make(chan struct{})
 	c.MaxDownloadSize = 2 * 1024 * 1024 * 1024
 	c.MaxMemoryDownloadSize = 100 * 1024 * 1024
 	if cfg.Matrix.MaxDownloadSize > 0 {
@@ -465,7 +468,22 @@ func (br *Connector) fetchCapabilities(ctx context.Context) *mautrix.RespCapabil
 	return caps
 }
 
+// WaitForMediaConfig waits until the homeserver's media config (MediaConfig) has been fetched on
+// startup, or fetching it failed and the defaults stay. Until then the upload limit is a 50 MB guess.
+func (br *Connector) WaitForMediaConfig(ctx context.Context) error {
+	if br.mediaConfigFetched == nil {
+		return nil
+	}
+	select {
+	case <-br.mediaConfigFetched:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
 func (br *Connector) fetchMediaConfig(ctx context.Context) {
+	defer close(br.mediaConfigFetched)
 	cfg, err := br.Bot.GetMediaConfig(ctx)
 	if err != nil {
 		br.Log.Warn().Err(err).Msg("Failed to fetch media config")
