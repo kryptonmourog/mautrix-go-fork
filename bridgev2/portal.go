@@ -2854,6 +2854,35 @@ func (portal *Portal) ensureFunctionalMember(ctx context.Context, ghost *Ghost) 
 	}
 }
 
+// removeDoublePuppetedGhost makes the ghost of a member leave the room when the member is shown by
+// their own Matrix account (double puppeting). The ghost stays when it joined before the member logged
+// into the bridge, and a member list that isn't full never removes it, so the member was listed twice.
+func (portal *Portal) removeDoublePuppetedGhost(ctx context.Context, sender networkid.UserID, intent MatrixAPI, currentMembers map[id.UserID]*event.MemberEventContent) {
+	if sender == "" {
+		return
+	}
+	ghostMXID := portal.Bridge.Matrix.FormatGhostMXID(sender)
+	if intent.GetMXID() == ghostMXID {
+		return
+	}
+	current, ok := currentMembers[ghostMXID]
+	delete(currentMembers, ghostMXID)
+	if !ok || (current.Membership != event.MembershipJoin && current.Membership != event.MembershipInvite) {
+		return
+	}
+	_, err := portal.Bridge.Bot.SendState(ctx, portal.MXID, event.StateMember, ghostMXID.String(), &event.Content{
+		Parsed: &event.MemberEventContent{
+			Membership:  event.MembershipLeave,
+			AvatarURL:   current.AvatarURL,
+			Displayname: current.Displayname,
+			Reason:      "User is in the room with their own account",
+		},
+	}, time.Now())
+	if err != nil {
+		zerolog.Ctx(ctx).Err(err).Stringer("user_id", ghostMXID).Msg("Failed to remove ghost of double puppeted user")
+	}
+}
+
 func (portal *Portal) getIntentAndUserMXIDFor(ctx context.Context, sender EventSender, source *UserLogin, otherLogins []*UserLogin, evtType RemoteEventType) (intent MatrixAPI, extraUserID id.UserID, err error) {
 	var ghost *Ghost
 	if !sender.IsFromMe && sender.ForceDMUser && portal.OtherUserID != "" && sender.Sender != portal.OtherUserID {
@@ -5102,6 +5131,7 @@ func (portal *Portal) syncParticipants(
 		}
 		if intent != nil {
 			syncIntent(intent, member)
+			portal.removeDoublePuppetedGhost(ctx, member.Sender, intent, currentMembers)
 		}
 		if extraUserID != "" {
 			syncUser(extraUserID, member, nil)
