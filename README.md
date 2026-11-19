@@ -1,3 +1,19 @@
+# mautrix-go-fork
+
+mautrix-go with the changes [telegram-bridge-advanced](https://github.com/kryptonmourog/telegram-bridge-advanced)
+needs. Versions are `v<mautrix-go>-adv.<N>`; the bridge uses it with a `replace` in its go.mod. bridgev2 changes:
+
+- a translation hook (`bridgev2.Translate`) for user-facing text: login prompts, notices, tombstones;
+- encryption of personal (private chat) portals only, and never of rooms the bridge can't decrypt;
+- direct media served alongside the websocket appservice, with a configurable server identity;
+- network connectors can wait for the homeserver's media config and choose the initial backfill limit
+  per portal;
+- a ghost leaves the room once its user is shown by their own account (double puppeting).
+
+The rest of this README is upstream's.
+
+---
+
 # mautrix-go
 [![GoDoc](https://pkg.go.dev/badge/maunium.net/go/mautrix)](https://pkg.go.dev/maunium.net/go/mautrix)
 
