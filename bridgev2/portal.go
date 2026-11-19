@@ -2875,7 +2875,7 @@ func (portal *Portal) removeDoublePuppetedGhost(ctx context.Context, sender netw
 			Membership:  event.MembershipLeave,
 			AvatarURL:   current.AvatarURL,
 			Displayname: current.Displayname,
-			Reason:      "User is in the room with their own account",
+			Reason:      Translate(ctx, "", "User is in the room with their own account"),
 		},
 	}, time.Now())
 	if err != nil {
