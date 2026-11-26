@@ -107,6 +107,18 @@ func (portal *Portal) isPastUnreadThreshold(messages []*BackfillMessage) bool {
 	return unreadThreshold > 0 && time.Since(messages[len(messages)-1].Timestamp) > unreadThreshold
 }
 
+func (portal *Portal) usesPrivateReceipts() bool {
+	policy, ok := portal.Bridge.Network.(PrivateReceiptPortalPolicy)
+	return ok && policy.UsePrivateReceipts(portal)
+}
+
+func (portal *Portal) markBackfillTargetRead(ctx context.Context, intent MatrixAPI, target id.EventID) error {
+	if privateIntent, ok := intent.(PrivateReadingMatrixAPI); ok && portal.usesPrivateReceipts() {
+		return privateIntent.MarkPrivateRead(ctx, portal.MXID, target, "")
+	}
+	return intent.MarkRead(ctx, portal.MXID, target, time.Now())
+}
+
 func (portal *Portal) markBackfillReadUpTo(ctx context.Context, source *UserLogin, readUpTo time.Time) {
 	dp := source.User.DoublePuppet(ctx)
 	if dp == nil {
@@ -116,7 +128,7 @@ func (portal *Portal) markBackfillReadUpTo(ctx context.Context, source *UserLogi
 	if err != nil {
 		zerolog.Ctx(ctx).Err(err).Time("read_up_to", readUpTo).Msg("Failed to get read target after backfill")
 	} else if target != nil {
-		err = dp.MarkRead(ctx, portal.MXID, target.MXID, time.Now())
+		err = portal.markBackfillTargetRead(ctx, dp, target.MXID)
 		if err != nil {
 			zerolog.Ctx(ctx).Err(err).Msg("Failed to mark room as read after backfill")
 		}
@@ -573,7 +585,7 @@ func (portal *Portal) sendBatch(ctx context.Context, source *UserLogin, messages
 		SendNotification:    !markRead && forceForward && !inThread,
 		Events:              out.Events,
 	}
-	if markRead {
+	if markRead && !portal.usesPrivateReceipts() {
 		req.MarkReadBy = source.UserMXID
 	}
 	_, err := portal.Bridge.Matrix.BatchSend(ctx, portal.MXID, req, out.Extras)
@@ -613,6 +625,13 @@ func (portal *Portal) sendBatch(ctx context.Context, source *UserLogin, messages
 				Str("portal_id", string(react.Room.ID)).
 				Str("portal_receiver", string(react.Room.Receiver)).
 				Msg("Failed to insert backfilled reaction to database")
+		}
+	}
+	if markRead && portal.usesPrivateReceipts() && len(out.DBMessages) > 0 {
+		if dp := source.User.DoublePuppet(ctx); dp != nil {
+			if err := portal.markBackfillTargetRead(ctx, dp, out.DBMessages[len(out.DBMessages)-1].MXID); err != nil {
+				zerolog.Ctx(ctx).Err(err).Msg("Failed to mark room as read after batch backfill")
+			}
 		}
 	}
 	return nil
@@ -675,7 +694,7 @@ func (portal *Portal) sendLegacyBackfill(ctx context.Context, source *UserLogin,
 	if markRead {
 		dp := source.User.DoublePuppet(ctx)
 		if dp != nil {
-			err := dp.MarkRead(ctx, portal.MXID, lastPart, time.Now())
+			err := portal.markBackfillTargetRead(ctx, dp, lastPart)
 			if err != nil {
 				zerolog.Ctx(ctx).Err(err).Msg("Failed to mark room as read after backfill")
 			}

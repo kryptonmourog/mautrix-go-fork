@@ -166,6 +166,16 @@ func (as *ASIntent) MarkRead(ctx context.Context, roomID id.RoomID, eventID id.E
 	return as.MarkThreadRead(ctx, roomID, eventID, ts, "")
 }
 
+func (as *ASIntent) MarkPrivateRead(ctx context.Context, roomID id.RoomID, eventID id.EventID, threadID id.EventID) error {
+	if threadID != "" {
+		return as.Matrix().SendReceipt(ctx, roomID, eventID, event.ReceiptTypeReadPrivate, map[string]any{"thread_id": threadID})
+	}
+	return as.Matrix().SetReadMarkers(ctx, roomID, &mautrix.ReqSetReadMarkers{
+		ReadPrivate: eventID,
+		FullyRead:   eventID,
+	})
+}
+
 func (as *ASIntent) MarkThreadRead(ctx context.Context, roomID id.RoomID, eventID id.EventID, ts time.Time, threadID id.EventID) (err error) {
 	extraData := map[string]any{}
 	if !ts.IsZero() {

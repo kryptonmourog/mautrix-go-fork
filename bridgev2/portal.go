@@ -4097,7 +4097,13 @@ func (portal *Portal) handleRemoteReadReceipt(ctx context.Context, source *UserL
 		addTargetLog = func(evt *zerolog.Event) *zerolog.Event {
 			return evt.Stringer("target_mxid", lastTarget.MXID)
 		}
-		if threadReadingIntent != nil {
+		if privateIntent, ok := intent.(PrivateReadingMatrixAPI); ok && portal.usesPrivateReceipts() {
+			var threadID id.EventID
+			if threadRoot != nil {
+				threadID = threadRoot.MXID
+			}
+			err = privateIntent.MarkPrivateRead(ctx, portal.MXID, lastTarget.MXID, threadID)
+		} else if threadReadingIntent != nil {
 			err = threadReadingIntent.MarkThreadRead(ctx, portal.MXID, lastTarget.MXID, getEventTS(evt), threadRoot.MXID)
 		} else {
 			err = intent.MarkRead(ctx, portal.MXID, lastTarget.MXID, getEventTS(evt))

@@ -237,6 +237,16 @@ type MatrixAPI interface {
 	GetEvent(ctx context.Context, roomID id.RoomID, eventID id.EventID) (*event.Event, error)
 }
 
+// PrivateReadingMatrixAPI marks messages read without emitting a public receipt.
+type PrivateReadingMatrixAPI interface {
+	MarkPrivateRead(ctx context.Context, roomID id.RoomID, eventID id.EventID, threadID id.EventID) error
+}
+
+// PrivateReceiptPortalPolicy selects portals where bridge-generated receipts are private.
+type PrivateReceiptPortalPolicy interface {
+	UsePrivateReceipts(portal *Portal) bool
+}
+
 type ThreadReadingMatrixAPI interface {
 	MatrixAPI
 	MarkThreadRead(ctx context.Context, roomID id.RoomID, eventID id.EventID, ts time.Time, threadID id.EventID) error
